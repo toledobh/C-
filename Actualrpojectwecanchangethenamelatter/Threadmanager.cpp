@@ -1,18 +1,25 @@
 #include <iostream>
-#include <thread>
-#include <queue>
-#include <mutex>
-#include <condition_variable>
-#include <memory>
 
-struct ThreadControlBlock {}
+class ThreadManager : public ThreadManager {
+public:
+    void createThread() override {
+        std::cout << "Creating a new thread." << std::endl;
+        // Implementation specific to creating a thread
+    }
 
-class ThreadManager {
-    queue<ThreadControlBlock*> threadQueue;
-    mutex queueMutex;
+    void terminateThread() override {
+        std::cout << "Terminating a thread." << std::endl;
+        // Implementation specific to terminating a thread
+    }
 
-    void createThread() {}
-    void terminateThread() {}
-    void runScheduler() {}
-}
+    void scheduleThread() override {
+        std::cout << "Scheduling threads." << std::endl;
+        // Implementation specific to scheduling threads
+    }
+
+    void synchronizeThreads() override {
+        std::cout << "Synchronizing threads." << std::endl;
+        // Implementation specific to synchronizing threads
+    }
+};
 
