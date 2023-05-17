@@ -3,83 +3,98 @@
 #include <queue>
 #include <mutex>
 #include <condition_variable>
+#include <memory>
 
-using namespace std;
+class ThreadControlBlock {
+public:
+    std::unique_ptr<std::thread> thread;
+    // Add any additional attributes you require for managing the thread.
 
-// Thread Control Block (TCB) data structure
-struct Thread {
-    int id;
-    thread t;
+    // Constructor
+    ThreadControlBlock() = default;
 };
 
 class ThreadManager {
 private:
-    queue<Thread> readyQueue;
-    mutex mtx;
-    condition_variable cv;
+    std::queue<ThreadControlBlock> readyQueue;
+    std::mutex mtx;
+    std::condition_variable cv;
     bool isTerminated;
 
 public:
     ThreadManager() : isTerminated(false) {}
 
-    void createThread(int id) {
-        unique_lock<mutex> lock(mtx);
-        readyQueue.push({id, thread(&ThreadManager::runThread, this, id)});
-        cv.notify_all();
+    void createThread() {
+        std::unique_lock<std::mutex> lock(mtx);
+
+        // Create a new thread and add it to the ready queue
+        ThreadControlBlock tcb;
+        tcb.thread = std::make_unique<std::thread>([this]() {
+            // Thread execution logic goes here
+            while (!isTerminated) {
+                // Execute thread tasks
+                // ...
+
+                // Yield the CPU after a fixed time slice
+                std::this_thread::yield();
+            }
+        });
+
+        readyQueue.push(std::move(tcb));
+        cv.notify_one();
     }
 
-    void terminateThread(int id) {
-        unique_lock<mutex> lock(mtx);
+    void terminateThreads() {
+        std::unique_lock<std::mutex> lock(mtx);
+
+        // Set the termination flag to true
         isTerminated = true;
+
+        // Notify all threads to terminate
         cv.notify_all();
     }
 
-    void runThread(int id) {
-        while (true) {
-            unique_lock<mutex> lock(mtx);
+    void startScheduler() {
+        std::unique_lock<std::mutex> lock(mtx);
 
-            // Check if the thread needs to be terminated
-            if (isTerminated) {
-                isTerminated = false;
-                break;
+        // Start scheduling the threads from the ready queue
+        while (!isTerminated) {
+            // Wait until a thread is available in the ready queue
+            while (readyQueue.empty() && !isTerminated) {
+                cv.wait(lock);
             }
 
-            // Check if the thread is at the front of the ready queue
-            if (!readyQueue.empty() && readyQueue.front().id == id) {
-                Thread currentThread = readyQueue.front();
+            // Retrieve the next thread to run from the ready queue
+            if (!readyQueue.empty()) {
+                ThreadControlBlock tcb = std::move(readyQueue.front());
                 readyQueue.pop();
-
-                // Simulate thread execution
-                cout << "Thread " << currentThread.id << " is running." << endl;
                 lock.unlock();
-                this_thread::sleep_for(chrono::seconds(1));  // Simulate work
-                lock.lock();
 
-                // Check if the thread is still valid
-                if (currentThread.t.joinable())
-                    currentThread.t.detach();
-            } else {
-                cv.wait(lock);  // Wait until the thread is at the front of the ready queue
+                // Resume execution of the selected thread
+                tcb.thread->join(); // Alternatively, you can detach the thread and handle its termination differently.
+
+                lock.lock();
             }
         }
     }
 };
 
 int main() {
-    ThreadManager manager;
+    ThreadManager threadManager;
 
-    // Create threads
-    manager.createThread(1);
-    manager.createThread(2);
-    manager.createThread(3);
+    // Create some threads
+    threadManager.createThread();
+    threadManager.createThread();
+    threadManager.createThread();
 
-    // Simulate work
-    this_thread::sleep_for(chrono::seconds(5));
+    // Start the scheduler
+    threadManager.startScheduler();
 
-    // Terminate threads
-    manager.terminateThread(1);
-    manager.terminateThread(2);
-    manager.terminateThread(3);
+    // Wait for user input to terminate the threads
+    std::cin.get();
+
+    // Terminate all threads
+    threadManager.terminateThreads();
 
     return 0;
 }
