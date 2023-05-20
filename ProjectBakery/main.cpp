@@ -4,6 +4,7 @@
 #include <unistd.h> 
 #include "product.h"
 #include "processScheduler.h"
+#include "threadManager.h"
 
 using namespace std;
 
@@ -46,6 +47,40 @@ void makeOrder(int option){
     cout << "\nTHE ORDER HAS BEEN COMPLETED.\n";
 }
 
+void stockUp(){
+
+  // Create a list of ingredients
+    vector<string> truck = {"flour", "sugar", "yeast","butter", "eggs", "vanilla","chocolate chips", 
+                            "brown sugar", "nuts","milk", "cocoa powder", "baking powder"};
+
+    cout << "\nInventory of ingredients requiring restocking:\n";
+    for (size_t i = 0; i < truck.size(); ++i) {
+        cout << truck[i];
+        if (i != truck.size() - 1) {
+            cout << ", ";
+        } else {
+            cout << ".\n\n";
+        }
+    }
+    cout<<endl;
+
+    // Create ThreadManager Object
+    cout << "-------------------START THE STORAGE OF PRODUCTS-------------------\n\n";
+    ThreadManager thM;
+    
+    // Create threads and pass the truck vector
+    for (int i = 0; i < 3; ++i) {
+        thM.createThread(truck);
+    }
+
+    // Start the scheduler
+    thM.startScheduler();
+     
+    // Terminate threads
+    thM.terminateThreads();
+
+    cout << "\n\n-------------------THE PRODUCTS HAVE BEEN STORED.-------------------\n\n";
+}
 
 void showLogo(){
 
@@ -64,7 +99,6 @@ void showLogo(){
         
     cout << logo << "\n";
 }
-
 
 void orderMenu(){
     int choice;
@@ -118,14 +152,15 @@ int main()
 {
     // Display Bakery's Logo
     showLogo();
-    
+
     // Display menu
     int choice;
     while (true) {
         cout << "PLEASE SELECT AN OPTION:\n";
-        cout << "1. ORDER\n";
+        cout << "1. MAKE AN ORDER\n";
+        cout << "2. RESTOCK INGREDIENTS\n";
         cout << "2. EXIT\n\n";
-        cout << "ENTER YOUR CHOICE: ";
+        cout << "ENTER YOUR CHOICE (1-3): ";
         cin >> choice;
 
         switch (choice) {
@@ -133,7 +168,10 @@ int main()
                 orderMenu();
                 break;
             case 2:
-                cout << "\nExiting the program. Goodbye!\n";
+                stockUp();
+                break;
+            case 3:
+                stockUp();
                 return 0;
             default:
                 cout << "\nInvalid choice. Please try again.\n\n";

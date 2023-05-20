@@ -6,7 +6,7 @@ using namespace std;
 
 class Process {
     private:
-        // Atributes
+        // Attributes
         int processId;
         string processName;
         int burstTime;
