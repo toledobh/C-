@@ -1,6 +1,7 @@
 #include <iostream>
+#include "ThreadManagerAbstract.cpp"
 
-class ThreadManager : public ThreadManager {
+class ThreadManager : public ThreadManagerAbstract {
 public:
     void createThread() override {
         std::cout << "Creating a new thread." << std::endl;

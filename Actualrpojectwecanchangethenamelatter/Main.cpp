@@ -1,5 +1,8 @@
+#include <iostream>
+#include "ThreadManager.cpp"
+
 int main() {
-    MyThreadManager threadManager;
+    ThreadManager threadManager;
 
     threadManager.createThread();
     threadManager.scheduleThread();
